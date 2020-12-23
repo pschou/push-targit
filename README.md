@@ -13,7 +13,8 @@ push_targit$ curl --data-binary '@test.tgz' http://localhost:8080/
 ```
 Verify that the tar-gzip'ed file has been uploaded and extracted properly:
 ```
-push_targit$ find /dev/shm/curl/
+push_targit$ find /dev/shm
+/dev/shm/
 /dev/shm/curl/
 /dev/shm/curl/testfile
 push_targit$ cat /dev/shm/curl/testfile
