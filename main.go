@@ -86,7 +86,7 @@ func backup(w http.ResponseWriter, r *http.Request) {
 		// to the branch of the config and push changes
 		out, err := exec.Command("/usr/bin/git", "version").Output()
 		if err != nil {
-			log.Println("Error running git add command:", err)
+			log.Println("Error running git version command:", err)
 			return
 		}
 		log.Println("Git version", string(out))
