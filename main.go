@@ -80,34 +80,34 @@ func backup(w http.ResponseWriter, r *http.Request) {
 					name,
 				)
 			}
+		}
 
-			// Now that all the files have been extracted to host_folder, use git to switch
-			// to the branch of the config and push changes
-			out, err := exec.Command("/usr/bin/git", "version").Output()
+		// Now that all the files have been extracted to host_folder, use git to switch
+		// to the branch of the config and push changes
+		out, err := exec.Command("/usr/bin/git", "version").Output()
+		if err != nil {
+			log.Println("Error running git add command:", err)
+			return
+		}
+		log.Println("Git version", string(out))
+		/*
+			_, err = exec.Command("git", "--git-dir="+host_folder, "add", "--all").Output()
 			if err != nil {
 				log.Println("Error running git add command:", err)
 				return
 			}
-			log.Println("Git version", string(out))
-			/*
-				_, err = exec.Command("git", "--git-dir="+host_folder, "add", "--all").Output()
-				if err != nil {
-					log.Println("Error running git add command:", err)
-					return
-				}
-				_, err = exec.Command("git", "--git-dir="+host_folder, "commit", "-m", "Automatic backup").Output()
-				if err != nil {
-					log.Println("Error running git command to commit:", err)
-					return
-				}
-				out, err := exec.Command("git", "--git-dir="+host_folder, "push").Output()
-				if err != nil {
-					log.Println("Error running git command to push:", err)
-					return
-				}
-				log.Println("Git push successful", out)
-			*/
-		}
+			_, err = exec.Command("git", "--git-dir="+host_folder, "commit", "-m", "Automatic backup").Output()
+			if err != nil {
+				log.Println("Error running git command to commit:", err)
+				return
+			}
+			out, err := exec.Command("git", "--git-dir="+host_folder, "push").Output()
+			if err != nil {
+				log.Println("Error running git command to push:", err)
+				return
+			}
+			log.Println("Git push successful", out)
+		*/
 	default:
 		fmt.Fprintf(w, "Sorry, only GET and POST methods are supported.")
 	}
