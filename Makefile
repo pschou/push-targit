@@ -1,5 +1,5 @@
-PROG_NAME := "post-targit"
-IMAGE_NAME := "pschou/post-targit"
+PROG_NAME := "push-targit"
+IMAGE_NAME := "pschou/push-targit"
 VERSION := "0.1"
 
 
