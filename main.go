@@ -17,6 +17,7 @@ import (
 )
 
 var upload_root_git = "/home/targit"
+var delete = true
 var Version = ""
 
 func backup(w http.ResponseWriter, r *http.Request) {
@@ -79,6 +80,7 @@ func backup(w http.ResponseWriter, r *http.Request) {
 			header, err := tarReader.Next()
 
 			if err == io.EOF {
+				log.Println("Ran to end of file on TAR", err)
 				break // if we are at the end of the tar file break the for loop
 			}
 			if err != nil {
@@ -87,9 +89,14 @@ func backup(w http.ResponseWriter, r *http.Request) {
 			}
 
 			name := header.Name
+			_, fname := filepath.Split(header.Name)
 			// avoid malformed and dotted names
-			if name == "" || name[0] == '.' {
+			if len(fname) > 0 && fname[0] == '.' {
 				continue
+			}
+
+			if debug {
+				log.Println("found type", header.Typeflag)
 			}
 
 			switch header.Typeflag {
@@ -120,6 +127,10 @@ func backup(w http.ResponseWriter, r *http.Request) {
 					name,
 				)
 			}
+		}
+
+		if debug {
+			log.Println("git", "--work-tree="+upload_root, "--git-dir="+upload_root_git, "add", "--all")
 		}
 
 		_, err = exec.Command("git", "--work-tree="+upload_root, "--git-dir="+upload_root_git, "add", "--all").Output()
@@ -157,8 +168,10 @@ func main() {
 	var prefix = flag.String("prefix", "", "URL prefix used upstream in reverse proxy endpoint for all incoming requests")
 	var verbose = flag.Bool("debug", false, "Verbose output")
 	var upload_dir = flag.String("upload_dir", upload_root_git, "Path for the git repository")
+	var delete_files = flag.Bool("delete_tmp_dir", delete, "Delete temporary upload directory after upload")
 	flag.Parse()
 
+	delete = *delete_files
 	upload_root_git = *upload_dir
 	//var err error
 	debug = *verbose

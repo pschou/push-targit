@@ -1,6 +1,6 @@
 PROG_NAME := "push-targit"
 IMAGE_NAME := "pschou/push-targit"
-VERSION := "0.2"
+VERSION := "0.3"
 
 
 build:
