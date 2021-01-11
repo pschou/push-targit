@@ -3,6 +3,7 @@ package main
 import (
 	"archive/tar"
 	"compress/gzip"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -11,10 +12,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
 var upload_root_git = "/home/targit"
+var Version = ""
 
 func backup(w http.ResponseWriter, r *http.Request) {
 	//var upload_root string
@@ -91,11 +94,15 @@ func backup(w http.ResponseWriter, r *http.Request) {
 
 			switch header.Typeflag {
 			case tar.TypeDir: // = directory
-				log.Println("Creating Directory:", name)
+				if debug {
+					log.Println("Creating Directory:", name)
+				}
 				os.Mkdir(upload_root+"/"+name, 0755)
 				os.Chtimes(upload_root+"/"+name, header.AccessTime, header.ModTime)
 			case tar.TypeReg: // = regular file
-				log.Println("Extracting file:", name)
+				if debug {
+					log.Println("Extracting file:", name)
+				}
 				data := make([]byte, header.Size)
 				_, err := tarReader.Read(data)
 				if err != nil && err != io.EOF {
@@ -139,8 +146,26 @@ func backup(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+var debug bool
+
 func main() {
-	http.HandleFunc("/", backup)
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Push TarGIT.  (%s), written by Paul Schou github@paulschou.com December 2020\nPrsonal use only, provided AS-IS -- not responsible for loss.\nUsage implies agreement.\n\n Usage of %s:\n", Version, os.Args[0])
+		flag.PrintDefaults()
+	}
+	var listen = flag.String("listen", ":8080", "Listen address tgz push")
+	var prefix = flag.String("prefix", "", "URL prefix used upstream in reverse proxy endpoint for all incoming requests")
+	var verbose = flag.Bool("debug", false, "Verbose output")
+	var upload_dir = flag.String("upload_dir", upload_root_git, "Path for the git repository")
+	flag.Parse()
+
+	upload_root_git = *upload_dir
+	//var err error
+	debug = *verbose
+
+	urlPrefix := "/" + strings.TrimRight(*prefix, "/")
+
+	http.HandleFunc(urlPrefix, backup)
 
 	// Now that all the files have been extracted to upload_root, use git to switch
 	// to the branch of the config and push changes
@@ -162,8 +187,8 @@ func main() {
 	fmt.Println("To print out the list of current system branchs use:\n/usr/bin/git", "--git-dir="+upload_root_git, "branch\n")
 	fmt.Println("To print out the list of current files in a branch use:\n/usr/bin/git", "--git-dir="+upload_root_git, "ls-tree --full-name -r system_name\n")
 
-	fmt.Printf("Starting server for HTTP POST of a tar to send to git (aka: tar'git)...\n")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	fmt.Printf("Starting server for HTTP POST (on %s%s) of a tar to send to git (aka: tar'git)...\n", *listen, urlPrefix)
+	if err := http.ListenAndServe(*listen, nil); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -182,7 +207,10 @@ func RemoveContents(dir string) error {
 	}
 	for _, name := range names {
 		fmt.Println(filepath.Join(dir, name))
-		err = os.RemoveAll(filepath.Join(dir, name))
+		if debug {
+			log.Println("removing", filepath.Join(dir, name))
+		}
+		//err = os.RemoveAll(filepath.Join(dir, name))
 		if err != nil {
 			fmt.Println("err:", err)
 			return err
